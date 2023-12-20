@@ -1,12 +1,13 @@
 Package: fdasynthesis
 Title: Functional Data Synthesis
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R: c( 
     person("Arianna", "Burzacchi", , "arianna.burzacchi@polimi.it", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0001-8284-4909"))
-    person("Lise", "Bellanger", role = "ctb", email = "lise.bellanger@univ-nantes.fr")
-    person("Aymeric", "Stamm", role = "ctb", email = "aymeric.stamm@cnrs.fr")
-    person("Simone", "Ventini", role = "ctb, email = "simone.vantini@polimi.it"")
+           comment = c(ORCID = "0000-0001-8284-4909")),
+    person("Lise", "Bellanger", role = "ctb", email = "lise.bellanger@univ-nantes.fr"),
+    person("Aymeric", "Stamm", role = "ctb", email = "aymeric.stamm@cnrs.fr"),
+    person("Simone", "Vantini", role = "ctb", email = "simone.vantini@polimi.it")
+    )
 Description: Through its main function SDG, tha package allows for the generation of a synthetic dataset of functions.
 License: MIT + file LICENSE
 Encoding: UTF-8
