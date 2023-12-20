@@ -23,3 +23,5 @@ Imports:
     roahd
 Suggests: 
     SPARTAAS
+URL: https://github.com/araiari/fdasynthesis
+BugReports: https://github.com/araiari/fdasynthesis/issues
