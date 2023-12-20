@@ -1,5 +1,5 @@
 Package: fdasynthesis
-Title: Synthetic Functional DAta generation for Mobility Application
+Title: Functional Data Synthesis
 Version: 0.0.0.9000
 Authors@R: 
     person("Arianna", "Burzacchi", , "arianna.burzacchi@polimi.it", role = c("aut", "cre"),
