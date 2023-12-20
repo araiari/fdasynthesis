@@ -67,7 +67,9 @@ compute_elastic_distance = function (
 #' @return list of two elements:
 #' - `Dx_tot` matrix \eqn{N \times N} : phase distance
 #' - `Dy_tot` matrix \eqn{N \times N} : amplitude distance
-compute_elastic_distance_N = function(
+#' For each matrix, the element in position `[i,j]` represents the distance
+#' between the `i`-th and the `j`-th function in `f_array`
+compute_elastic_distance_one_set = function(
     f_array, time
     ) {
 
@@ -90,6 +92,56 @@ compute_elastic_distance_N = function(
 
   Dx_tot = Dx_tot + t(Dx_tot)
   Dy_tot = Dy_tot + t(Dy_tot)
+
+  return(list(Dx_tot = Dx_tot, Dy_tot = Dy_tot))
+}
+
+
+
+#' Elastic distances computation between two set of functions
+#'
+#' Calculates pairwise the amplitude distance and the phase distance of the items
+#' in a set of functions with the items in another set of functions.
+#' Iteratively calls the function elastic.distance.ari.
+#'
+#' @param f_array1 an array of dimensions \eqn{L \times M \times N1} : contains the
+#' values of \eqn{N1} functions of dimension \eqn{L} observed over \eqn{M} points
+#' @param f_array2 an array of dimensions \eqn{L \times M \times N2} : contains the
+#' values of \eqn{N2} functions of dimension \eqn{L} observed over \eqn{M} points
+#' in the domain
+#' @param time \eqn{M}-dimensional vector, sample points of functions
+#'
+#' @return list of two elements:
+#' - `Dx_tot` matrix \eqn{N1 \times N2} : phase distance
+#' - `Dy_tot` matrix \eqn{N1 \times N2} : amplitude distance
+#' For each matrix, the element in position `[i,j]` represents the distance
+#' between the `i`-th function in `f_array1` and the `j`-th function in `f_array_2`
+compute_elastic_distance_two_sets = function(
+    f_array1, f_array2, time
+) {
+
+  if (dim(f_array1)[1] != dim(f_array2)[1])
+    cli::cli_abort("Error: function in the two sets have different dimensions L")
+  if (dim(f_array1)[2] != dim(f_array2)[2])
+    cli::cli_abort("Error: function in the two sets have different grid sizes M")
+
+  L = dim(f_array1)[1]
+  M = dim(f_array1)[2]
+  N1 = dim(f_array1)[3]
+  N2 = dim(f_array2)[3]
+
+  Dx_tot = Dy_tot = matrix(data=0, nrow=N1, ncol=N2)
+  pb = utils::txtProgressBar(min=0, max=N1*N2, style=3); pb_iter=0
+  for (i_f1 in 1:N1){
+    for (i_f2 in 1:N2){
+      pb_iter=pb_iter+1
+      utils::setTxtProgressBar(pb, pb_iter)
+      out = compute_elastic_distance(f_array1[,,i_f1], f_array2[,,i_f2], time, lambda=0, pen='roughness')
+      Dx_tot[i_f1, i_f2] = out$Dx
+      Dy_tot[i_f1, i_f2] = out$Dy
+    }
+  }
+  close(pb)
 
   return(list(Dx_tot = Dx_tot, Dy_tot = Dy_tot))
 }

@@ -6,7 +6,7 @@
 \usage{
 SDG(
   fun_array,
-  i_try = NULL,
+  i_synth = NULL,
   time = NULL,
   D_list = NULL,
   w_a = NULL,
@@ -24,17 +24,27 @@ SDG(
 \item{fun_array}{array of sizes \eqn{L \times M \times N} : contains the values
 of the \eqn{N} original functions of dimension \eqn{L} evaluated on \eqn{M} points.}
 
-\item{i_try}{integer vector : subset of the curves to be synthetized}
+\item{i_synth}{integer vector of length \eqn{N_{synth} \leq N}: subset of the curves
+to be synthetized. If \code{NULL} all the curves are synthetized.}
 
 \item{time}{vector of size \eqn{M} : specifies the grid on which the curves are
 evaluated. If \code{NULL}, it is set as an uniform grid in \eqn{[0,1]}.}
 
-\item{D_list}{list of two elements, each of which is either a dist objector a square
-matrix, which must have the same dimension \eqn{N} : represent the elastic
-distances of (respectively) phase and amplitude between the functions.}
+\item{D_list}{list of two elements \code{Dx_tot} and \code{Dy_tot} for (respectively)
+phase and amplitude distance matrices.
+\itemize{
+\item If \code{w_a} is not specified, list of two elements, each of which is either a distance
+matrix of dimension \eqn{N \times N} : elastic distances
+between all the functions.
+\item If \code{w_a} is specified, list of two elements, each of which is either a distance
+matrix of dimension \eqn{N_{synth} \times N} : elastic
+distances between functions to be synthetized and all the functions.
+\item If \code{NULL} it is computed.
+}}
 
 \item{w_a}{scalar with values in \eqn{[0,1]} : weights of the
-amplitude distance in the linear combination of the elastic distances.}
+amplitude distance in the linear combination of the elastic distances. If \code{NULL}
+it is estimated.}
 
 \item{K}{scalar integer : number of neighbors to be considered.}
 
@@ -63,7 +73,7 @@ the calculations in the console. Defaults to \code{FALSE}.}
 \value{
 a list of the following elements:
 \itemize{
-\item \code{fun_s_array} array of sizes \eqn{L \times M \times N} : contains the values
+\item \code{fun_s_array} array of sizes \eqn{L \times M \times N_{synth}} : contains the values
 of the \eqn{N} synthetic functions of dimension \eqn{L} evaluated on \eqn{M}
 points.
 }

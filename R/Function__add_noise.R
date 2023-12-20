@@ -40,6 +40,8 @@
 #' @param cv scalar, only non-negative values are accepted : coefficient of variation (see Details).
 #' @param is_constrained vector of size \eqn{L} : each element indicates
 #' whether the dimension \eqn{l = 1,\dots,L} is constrained and how (see Details)
+#' @param use_verbose boolean : specifying whether to display information about
+#'   the calculations in the console. Defaults to `FALSE`.
 #'
 #' @return
 #' - `template_q_new` matrix of dimensions \eqn{L \times M} : original function
@@ -47,7 +49,7 @@
 #'
 #' @export
 add_noise = function(
-    qn, template_q, time = NULL, cv = 0, is_constrained = NULL
+    qn, template_q, time = NULL, cv = 0, is_constrained = NULL, use_verbose = FALSE
     ) {
 
   dims = dim(qn)
@@ -76,10 +78,10 @@ add_noise = function(
   use_opt_ampl = ifelse(cv[1] == 0, TRUE, FALSE)
   if (is.null(is_constrained))
     is_constrained = rep("real", L)
-  if (length(is_constrained != L))
-    cli::cli_abort("Error: is_constrained must be of length L")
+  if (length(is_constrained) != L)
+    cli::cli_abort(glue("Error: is_constrained is of length {length(is_constrained)} but must be of length L={L}"))
   if (sum(is_constrained == "real") + sum(is_constrained == "pos") + sum(is_constrained == "strict-pos") != L)
-    cli::cli_abort("Error: is_constrained accept only values among pos, strict-pos, real")
+    cli::cli_abort("Error: is_constrained accept only values among 'pos', 'strict-pos', and 'real'")
   do_positive = (sum(is_constrained != "real") > 0)
 
 
@@ -88,10 +90,15 @@ add_noise = function(
 
   if (do_positive) {
     for (l in which(is_constrained != "real")){
-      if (is_constrained[l] == "pos")
+      if (is_constrained[l] == "pos") {
         MU[l,] = sqrt(MU[l,])
-      if (is_constrained[l] == "strict-pos")
+        qn[l,,] = sqrt(qn[l,,])
+        print(dim(qn))
+      }
+      if (is_constrained[l] == "strict-pos"){
         MU[l,] = log(MU[l,])
+        qn[l,,] = log(qn[l,,])
+      }
     }
   }
 
@@ -120,8 +127,11 @@ add_noise = function(
 
     if (use_opt_ampl)
       roahd::exp_cov_function(time, alpha = par_opt$par[1], beta = par_opt$par[2])
-    else
+    else {
+      if (use_verbose)
+        cli::cli_alert_info(glue("Covariance amplitude modified from optimal {round(par_opt$par[1],3)} to {round(cv[l],3)}"))
       roahd::exp_cov_function(time, alpha = cv[l], beta = par_opt$par[2])
+    }
     })
 
 

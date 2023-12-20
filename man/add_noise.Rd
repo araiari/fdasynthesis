@@ -4,7 +4,14 @@
 \alias{add_noise}
 \title{Add Noise to the Template}
 \usage{
-add_noise(qn, template_q, time = NULL, cv = 0, is_constrained = NULL)
+add_noise(
+  qn,
+  template_q,
+  time = NULL,
+  cv = 0,
+  is_constrained = NULL,
+  use_verbose = FALSE
+)
 }
 \arguments{
 \item{qn}{array of dimension \eqn{L \times M \times N} : contains the set of \eqn{N}
@@ -22,6 +29,9 @@ are evaluated. If \code{NULL}, it is set as an uniform grid in \eqn{[0,1]}.}
 
 \item{is_constrained}{vector of size \eqn{L} : each element indicates
 whether the dimension \eqn{l = 1,\dots,L} is constrained and how (see Details)}
+
+\item{use_verbose}{boolean : specifying whether to display information about
+the calculations in the console. Defaults to \code{FALSE}.}
 }
 \value{
 \itemize{
