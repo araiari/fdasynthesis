@@ -49,7 +49,7 @@
 #'
 #' @export
 add_noise = function(
-    qn, template_q, time = NULL, cv = 0, is_constrained = NULL, use_verbose = FALSE
+    qn, template_q, time = NULL, cv = 0.0, is_constrained = NULL, use_verbose = FALSE
     ) {
 
   dims = dim(qn)
@@ -73,13 +73,13 @@ add_noise = function(
   if (length(cv) > 1)
     cli::cli_alert_warning("Warning: cv has length > 1. Only the first element is used")
   cv = rep(cv[1], L)
-  if (cv[1] > 1)
+  if (cv[1] < 0)
     cli::cli_abort("Error: cv must be non-negative")
   use_opt_ampl = ifelse(cv[1] == 0, TRUE, FALSE)
   if (is.null(is_constrained))
     is_constrained = rep("real", L)
   if (length(is_constrained) != L)
-    cli::cli_abort(glue("Error: is_constrained is of length {length(is_constrained)} but must be of length L={L}"))
+    cli::cli_abort("Error: is_constrained is of length {length(is_constrained)} but must be of length L={L}")
   if (sum(is_constrained == "real") + sum(is_constrained == "pos") + sum(is_constrained == "strict-pos") != L)
     cli::cli_abort("Error: is_constrained accept only values among 'pos', 'strict-pos', and 'real'")
   do_positive = (sum(is_constrained != "real") > 0)
@@ -93,7 +93,6 @@ add_noise = function(
       if (is_constrained[l] == "pos") {
         MU[l,] = sqrt(MU[l,])
         qn[l,,] = sqrt(qn[l,,])
-        print(dim(qn))
       }
       if (is_constrained[l] == "strict-pos"){
         MU[l,] = log(MU[l,])
@@ -129,7 +128,7 @@ add_noise = function(
       roahd::exp_cov_function(time, alpha = par_opt$par[1], beta = par_opt$par[2])
     else {
       if (use_verbose)
-        cli::cli_alert_info(glue("Covariance amplitude modified from optimal {round(par_opt$par[1],3)} to {round(cv[l],3)}"))
+        cli::cli_alert_info("Covariance amplitude modified from optimal {round(par_opt$par[1],3)} to {round(cv[l],3)}")
       roahd::exp_cov_function(time, alpha = cv[l], beta = par_opt$par[2])
     }
     })

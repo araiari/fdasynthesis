@@ -93,7 +93,7 @@ SDG = function (
 
   if (add_noise && !is.null(is_constrained)) {
     if (length(is_constrained) != L)
-      cli::cli_abort(glue("Error: is_constrained is of length {length(is_constrained)} but must be of length L"))
+      cli::cli_abort("Error: is_constrained is of length {length(is_constrained)} but must be of length L")
   if (sum(is_constrained %in% c("real", "pos","strict-neg","mon","strict-mon"))!= L)
     cli::cli_abort("Error: is_constrained accepts only values between 'pos', 'strict-pos', 'mon', 'strict-mon', and 'real'")
   }
@@ -111,17 +111,17 @@ SDG = function (
       !is.null(D_list) &&
       (nrow(D_list$Dx_tot)!= N || ncol(D_list$Dx_tot)!= N  ||
        nrow(D_list$Dy_tot)!= N || ncol(D_list$Dy_tot)!= N ))
-    cli::cli_abort(glue("Error: distance matrices must be of dimensions NxN = {N}x{N}"))
+    cli::cli_abort("Error: distance matrices must be of dimensions NxN = {N}x{N}")
   if (!estimate_w_a &&
       !is.null(D_list) &&
       (nrow(D_list$Dx_tot)!= N_synth || ncol(D_list$Dx_tot)!= N  ||
        nrow(D_list$Dy_tot)!= N_synth || ncol(D_list$Dy_tot)!= N ))
-    cli::cli_abort(glue("Error: distance matrices must be of dimensions N_synthxN = {N_synth}x{N}"))
+    cli::cli_abort("Error: distance matrices must be of dimensions N_synthxN = {N_synth}x{N}")
   if (is.null(clust_labels))
     cluster_search = FALSE
   else {
     if (length(clust_labels) != N)
-      cli::cli_abort(glue("Error: cluster labels must be of length N={N}"))
+      cli::cli_abort("Error: cluster labels must be of length N={N}")
     cluster_search = TRUE
   }
   if (use_verbose)
