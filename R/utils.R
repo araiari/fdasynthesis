@@ -180,3 +180,9 @@ cumintegrate = function (
     )$value
   })
 }
+
+linear_index <- function(n) {
+  res <- tidyr::expand_grid(i = 1:n, j = 1:n)
+  res <- subset(res, res$j > res$i)
+  res
+}
