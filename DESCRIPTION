@@ -18,10 +18,13 @@ Imports:
     doParallel,
     fdasrvf,
     foreach,
+    furrr,
     pracma,
+    progressr,
     purrr,
     rlang,
-    roahd
+    roahd,
+    tidyr
 Suggests: 
     SPARTAAS
 URL: https://github.com/araiari/fdasynthesis
