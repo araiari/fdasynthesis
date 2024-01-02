@@ -1,63 +1,3 @@
-#' Elastic distances computation for 2 functions
-#'
-#' @description
-#' Calculates the amplitude distance and the phase distance of two functions.
-#'
-#' @param f1 An \eqn{M}-dimensional vector (if unidimensional) or an \eqn{L
-#'   \times M} matrix (if multidimensional) with the \eqn{M} measurements in the
-#'   \eqn{L} dimensions of the function `f1`.
-#' @param f2 An \eqn{M}-dimensional vector (if unidimensional) or an \eqn{L
-#'   \times M} matrix (if multidimensional) with the \eqn{M} measurements in the
-#'   \eqn{L} dimensions of the function `f2`.
-#' @param time An \eqn{M}-dimensional vector, sample points of functions.
-#' @param lambda A numeric value in \eqn{[0,1]}, controlling the amount of
-#'   warping. Defaults to `0`.
-#' @param pen A string specifying the type of alignment penalty. Choices are
-#'   `"roughness"` (second derivative), `"geodesic"` (geodesic distance from
-#'   `id`), `"norm"` (norm from `id`). Defaults to `"roughness"`.
-#'
-#' @return list of two elements:
-#' - `Dx` scalar : phase distance
-#' - `Dy` scalar : amplitude distance
-compute_elastic_distance = function (f1, f2, time, lambda = 0, pen = "roughness") {
-  q1 <- fdasrvf::f_to_srvf(f1, time, multidimensional = TRUE)
-  q2 <- fdasrvf::f_to_srvf(f2, time, multidimensional = TRUE)
-
-  gam <- fdasrvf::optimum.reparam(
-    Q1 = q1,
-    T1 = time,
-    Q2 = q2,
-    T2 = time,
-    lambda = 0,
-    pen = "roughness",
-    f1o = c(f1[, 1]),
-    f2o = c(f2[, 1])
-  )
-
-  fw <- qw <- NULL
-  for (i in 1:nrow(f2)) {
-    fw <- rbind(fw, fdasrvf::warp_f_gamma(f2[i, ], time, gam))
-    qw <- rbind(qw, fdasrvf::warp_q_gamma(q2[i, ], time, gam))
-  }
-
-  Dy <- 0
-  for (i in 1:nrow(f2))
-    Dy <- Dy + pracma::trapz(time, (q1[i, ] - qw[i, ]) ^ 2)
-  Dy <- sqrt(Dy) ## amplitude distance
-
-  time1 <- seq(0, 1, length.out = length(time))
-  binsize <- mean(diff(time1))
-  psi <- sqrt(fdasrvf::gradient(gam, binsize))
-  q1dotq2 <- pracma::trapz(time1, psi)
-  if (q1dotq2 > 1)
-    q1dotq2 <- 1
-  else if (q1dotq2 < -1)
-    q1dotq2 <- -1
-  Dx <- acos(q1dotq2) ## phase distance
-
-  list(Dy = Dy, Dx = Dx)
-}
-
 #' Elastic distances computation between a set of functions
 #'
 #' Calculates pairwise the amplitude distance and the phase distance of a set of
@@ -76,9 +16,10 @@ compute_elastic_distance = function (f1, f2, time, lambda = 0, pen = "roughness"
 compute_elastic_distance_one_set <- function(f_array, time) {
   call <- rlang::call_match()
 
+  L <- dim(f_array)[1]
   N <- dim(f_array)[3]
 
-  if (is.null(labels))
+  # if (is.null(labels))
     labels <- 1:N
 
   index_table <- linear_index(N)
@@ -87,19 +28,19 @@ compute_elastic_distance_one_set <- function(f_array, time) {
     pb <- progressr::progressor(steps = nrow(index_table))
     furrr::future_map2(index_table$i, index_table$j, \(i, j) {
       pb()
-      compute_elastic_distance(
-        f1 = f_array[, , i],
-        f2 = f_array[, , j],
-        time = time,
-        lambda = 0,
-        pen = "roughness"
+      fdasrvf::calc_shape_dist(
+        beta1 = f_array[, , i],
+        beta2 = f_array[, , j],
+        mode = "O",
+        rotation = FALSE,
+        scale = TRUE
       )
     }, .options = furrr::furrr_options(seed = TRUE))
   }
 
   Dlist <- .pairwise_distances(index_table)
 
-  Dx_tot <- purrr::map_dbl(Dlist, "Dx")
+  Dx_tot <- purrr::map_dbl(Dlist, "dx")
   attributes(Dx_tot) <- NULL
   attr(Dx_tot, "Labels") <- labels
   attr(Dx_tot, "Size") <- N
@@ -108,7 +49,7 @@ compute_elastic_distance_one_set <- function(f_array, time) {
   attr(Dx_tot, "call") <- call
   class(Dx_tot) <- "dist"
 
-  Dy_tot <- purrr::map_dbl(Dlist, "Dy")
+  Dy_tot <- purrr::map_dbl(Dlist, "d")
   attributes(Dy_tot) <- NULL
   attr(Dy_tot, "Labels") <- labels
   attr(Dy_tot, "Size") <- N
@@ -159,16 +100,16 @@ compute_elastic_distance_two_sets = function(f_array1, f_array2, time) {
     furrr::future_walk(1:N1, \(n1) {
       pb()
       out <- purrr::map(1:N2, \(n2) {
-        compute_elastic_distance(
-          f1 = f1[, , n1],
-          f2 = f2[, , n2],
-          time = time,
-          lambda = 0,
-          pen = "roughness"
+        fdasrvf::calc_shape_dist(
+          beta1 = f_array1[, , n1],
+          beta2 = f_array2[, , n2],
+          mode = "O",
+          rotation = FALSE,
+          scale = TRUE
         )
       })
-      Dx_tot[n1, ] <- purrr::map_dbl(out, "Dx")
-      Dy_tot[n1, ] <- purrr::map_dbl(out, "Dy")
+      Dx_tot[n1, ] <- purrr::map_dbl(out, "dx")
+      Dy_tot[n1, ] <- purrr::map_dbl(out, "d")
     }, .options = furrr::furrr_options(seed = TRUE))
   }
 
