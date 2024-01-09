@@ -32,7 +32,6 @@
 multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
                                                 wts = NULL)
 {
-
   L = tmp[1]
   M = tmp[2]
   N = tmp[3]
@@ -70,8 +69,7 @@ multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
     gam[, k] = out$gambest
   }
 
-  gam = t(gam)
-  gamI = fdasrvf::SqrtMeanInverse(t(gam))
+  gamI = SqrtWeightedMeanInverse(gam)
   bmu = group_action_by_gamma_coord(bmu, gamI)
   mu = fdasrvf::curve_to_q(bmu, FALSE)$q
   mu[is.nan(mu)] = 0
@@ -89,30 +87,39 @@ multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
       qn[, , i] = out$q2best
       betan[, , i] = fdasrvf::q_to_curve(out$q2best)
 
+      gam[,i] = out$gambest
+
       sumd[itr + 1] = sumd[itr + 1] + dist^2
     }
 
 
+    # Mean computation
     v_w = array(sapply(1:N, function(n) qn[, , n] * wts[n]), dim = dim(qn))
     vbar = rowSums(v_w, dims = 2) / sum(wts)
+    bbar = fdasrvf::q_to_curve(v_w)
 
 
     normbar[itr] = sqrt(innerprod_q2(vbar, vbar))
-    normv = normbar[itr]
-    if ((sumd[itr] - sumd[itr + 1]) < 0){ # Se le distanze dalla media sono aumentate, esci
-      break
-    } else if ((normv > tolv) && (abs(sumd[itr + 1] - sumd[itr]) > told)) {
 
-      ## Qui: Aggiungere un warping medio a tutte le funzioni prima di mediare?
+    # Se le distanze dalla media sono aumentate, esci
+    if ((sumd[itr] - sumd[itr + 1]) < 0) { break }
+    # Se le distanze dalla media sono diminuite a sufficienza e la norma della media non e troppo grande, esci
+    if ((normbar[itr] <= tolv) || (abs(sumd[itr + 1] - sumd[itr]) <= told)) { break }
 
-      mu = vbar
-      betamean = fdasrvf::q_to_curve(mu)
-    }
-    else { # Se le distanze dalla media sono diminuite a sufficienza e la norma della media non e troppo grande, esci
-      break
-    }
+    mu = vbar
+    betamean = bbar
+
     itr = itr + 1
   }
+
+
+  # Normalization step ????????????????????????????????
+  # Lo devo fare? Lo devo fare qui? Lo devo fare cosi?
+  gam = t(gam)
+  gamI = SqrtWeightedMeanInverse(t(gam))
+  betamean = group_action_by_gamma_coord(betamean, gamI)
+  mu = fdasrvf::curve_to_q(betamean, FALSE)$q
+
 
   ifelse(is_weighted, type <- "Karcher Weighted Median", type <- "Karcher Mean")
   return(list(betamean = betamean, mu = mu, beta = beta, q = q, betan = betan,
