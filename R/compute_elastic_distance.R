@@ -32,7 +32,7 @@ compute_elastic_distance_one_set <- function(f_array, time) {
           beta2 = f_array[, , j],
           mode = "O",
           rotation = FALSE,
-          scale = TRUE
+          scale = FALSE
         )
       }, .options = furrr::furrr_options(seed = TRUE))
     }
@@ -131,7 +131,7 @@ compute_elastic_distance_two_sets = function(f_array1, f_array2, time) {
             beta2 = f2[, , n2],
             mode = "O",
             rotation = FALSE,
-            scale = TRUE
+            scale = FALSE
           )
         })
 
