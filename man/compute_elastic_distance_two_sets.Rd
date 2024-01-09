@@ -9,11 +9,13 @@ compute_elastic_distance_two_sets(f_array1, f_array2, time)
 \arguments{
 \item{f_array1}{An array of dimensions \eqn{L \times M \times N1} : contains
 the values of \eqn{N1} functions of dimension \eqn{L} observed over \eqn{M}
-points.}
+points. For unidimensional functions, provide an array of dimensions
+\eqn{1 \times M \times N1}.}
 
 \item{f_array2}{An array of dimensions \eqn{L \times M \times N2} : contains
 the values of \eqn{N2} functions of dimension \eqn{L} observed over \eqn{M}
-points in the domain.}
+points in the domain. For unidimensional functions, provide an array of
+dimensions \eqn{1 \times M \times N2}.}
 
 \item{time}{An \eqn{M}-dimensional vector, sample points of functions.}
 }
