@@ -1,28 +1,27 @@
 
-calculate_centroid <- function(beta, returnlength = F){
-  L = nrow(beta)
-  M = ncol(beta)
+calculatecentroid <- function(beta,returnlength = F){
+  n = nrow(beta)
+  T1 = ncol(beta)
 
-  betadot = apply(beta, 1, fdasrvf::gradient, 1.0/(M-1))
+  betadot = apply(beta,1,gradient,1.0/(T1-1))
   betadot = t(betadot)
 
-  normbetadot = apply(betadot, 2, pvecnorm, 2) # in utils_curve
-  integrand = matrix(0, L, M)
-  for (i in 1:M){
+  normbetadot = apply(betadot,2,pvecnorm,2)
+  integrand = matrix(0, n, T1)
+  for (i in 1:T1){
     integrand[,i] = beta[,i] * normbetadot[i]
   }
 
-  scale = integrate(seq(0,1,length.out=M), normbetadot)
-  centroid = apply(integrand, 1, integrate, x = seq(0, 1, length.out = M))/scale
-  if(returnlength)  return(list("length" = scale, "centroid" = centroid))
+  scale = trapz(seq(0,1,length.out=T1), normbetadot)
+  centroid = apply(integrand,1,trapz,x = seq(0,1,length.out=T1))/scale
+  if(returnlength)  return(list("length" = scale,"centroid" = centroid))
   return(centroid)
 }
 
 
-
-innerprod_q2 <- function(q1, q2){
-  L = ncol(q1)
-  val = sum(q1*q2)/L
+innerprod_q2 <- function(q1, q2){ ###########
+  T1 = ncol(q1)
+  val = sum(q1*q2)/T1
   return(val)
 }
 
@@ -157,10 +156,11 @@ shift_f <- function(f, tau){
 }
 
 
-find_rotation_seed_coord <- function(beta1, beta2, mode="O", rotation=TRUE){
+find_rotation_seed_coord <- function(beta1, beta2, mode="O", rotation=TRUE,
+                                     scale=TRUE){ ###########
   n = nrow(beta1)
   T1 = ncol(beta1)
-  q1 = curve_to_q(beta1)$q
+  q1 = curve_to_q(beta1, scale)$q
 
   scl = 4
   minE = 1000
@@ -184,22 +184,20 @@ find_rotation_seed_coord <- function(beta1, beta2, mode="O", rotation=TRUE){
     if (rotation){
       out = find_best_rotation(beta1, beta2n)
       beta2n = out$q2new
-      q2n = curve_to_q(beta2n)$q
-      Rbest = out$R
+      q2n = curve_to_q(beta2n, scale)$q
+      Rout = out$R
     } else {
-      q2n = curve_to_q(beta2n)$q
-      Rbest = diag(nrow(beta2n))
+      q2n = curve_to_q(beta2n, scale)$q
+      Rout = diag(nrow(beta2n))
     }
 
 
     if (norm(q1-q2n,'F') > 0.0001){
-      q1 = q1/sqrt(innerprod_q2(q1, q1))
-      q2n = q2n/sqrt(innerprod_q2(q2n, q2n))
-      q1i = q1
+      q1i = q1/sqrt(innerprod_q2(q1, q1))
+      q2ni = q2n/sqrt(innerprod_q2(q2n, q2n))
       dim(q1i) = c(T1*n)
-      q2i = q2n
-      dim(q2i) = c(T1*n)
-      gam0 = .Call('DPQ', PACKAGE = 'fdasrvf', q1i, q2i, n, T1, 0, 1, 0, rep(0,T1))
+      dim(q2ni) = c(T1*n)
+      gam0 = .Call('DPQ', PACKAGE = 'fdasrvf', q1i, q2ni, n, T1, 0, 1, 0, rep(0,T1))
       gamI = invertGamma(gam0)
       gam = (gamI-gamI[1])/(gamI[length(gamI)]-gamI[1])
       beta2n = q_to_curve(q2n)
@@ -222,7 +220,7 @@ find_rotation_seed_coord <- function(beta1, beta2, mode="O", rotation=TRUE){
     }
     Ec = acos(dist)
     if (Ec < minE){
-      Rbest = Rbest
+      Rbest = Rout
       beta2best = beta2new
       q2best = q2new
       gambest = gam
@@ -235,7 +233,8 @@ find_rotation_seed_coord <- function(beta1, beta2, mode="O", rotation=TRUE){
 }
 
 
-find_rotation_seed_unqiue <- function(q1, q2, mode="O", rotation=TRUE, lam=0.0){
+find_rotation_seed_unqiue <- function(q1, q2, mode = "O", rotation = TRUE,
+                                      scale = TRUE, lam = 0.0){ ########
   n1 = nrow(q1)
   T1 = ncol(q1)
   scl = 4
@@ -263,13 +262,11 @@ find_rotation_seed_unqiue <- function(q1, q2, mode="O", rotation=TRUE, lam=0.0){
 
 
     if (norm(q1-q2n,'F') > 0.0001){
-      q1 = q1/sqrt(innerprod_q2(q1, q1))
-      q2n = q2n/sqrt(innerprod_q2(q2n, q2n))
-      q1i = q1
+      q1i = q1/sqrt(innerprod_q2(q1, q1))
+      q2ni = q2n/sqrt(innerprod_q2(q2n, q2n))
       dim(q1i) = c(T1*n1)
-      q2i = q2n
-      dim(q2i) = c(T1*n1)
-      gam0 = .Call('DPQ', PACKAGE = 'fdasrvf', q1i, q2i, n1, T1, lam, 1, 0, rep(0,T1))
+      dim(q2ni) = c(T1*n1)
+      gam0 = .Call('DPQ', PACKAGE = 'fdasrvf', q1i, q2ni, n1, T1, lam, 1, 0, rep(0,T1))
       gamI = invertGamma(gam0)
       gam = (gamI-gamI[1])/(gamI[length(gamI)]-gamI[1])
       beta2n = q_to_curve(q2n)
@@ -323,7 +320,7 @@ find_rotation_and_seed_q <- function(q1,q2){
 }
 
 
-group_action_by_gamma <- function(q, gamma){
+group_action_by_gamma <- function(q, gamma){ #######
   n = nrow(q)
   T1 = ncol(q)
   gammadot = gradient(gamma, 1.0/T1)
@@ -340,7 +337,7 @@ group_action_by_gamma <- function(q, gamma){
 }
 
 
-group_action_by_gamma_coord <- function(f, gamma){
+group_action_by_gamma_coord <- function(f, gamma){ ########
   n = nrow(f)
   T1 = ncol(f)
   fn = matrix(0, n, T1)
@@ -646,8 +643,24 @@ elastic_shooting <- function(q1, v,mode="O"){
 }
 
 
-pvecnorm = function (v, p = 2)
+pvecnorm = function (v, p = 2) ###########
 {
   sum(abs(v)^p)^(1/p)
+}
+
+
+repmat <- function(X,m,n){ #############
+  ##R equivalent of repmat (matlab)
+  mx = dim(X)[1]
+  if (is.null(mx)){
+    mx = 1
+    nx = length(X)
+    mat = matrix(t(matrix(X,mx,nx*n)),mx*m,nx*n,byrow=T)
+  }else {
+    nx = dim(X)[2]
+    mat = matrix(t(matrix(X,mx,nx*n)),mx*m,nx*n,byrow=T)
+  }
+
+  return(mat)
 }
 
