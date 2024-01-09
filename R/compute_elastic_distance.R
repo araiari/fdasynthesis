@@ -19,11 +19,11 @@ compute_elastic_distance_one_set <- function(f_array, time) {
   L <- dim(f_array)[1]
   N <- dim(f_array)[3]
 
-  index_table <- fdasynthesis:::linear_index(N)
+  index_table <- linear_index(N)
 
   # Multidimensional case:
   if (L > 1) {
-    .pairwise_distances <- function(index_table) {
+    .pairwise_distances1 <- function(index_table) {
       pb <- progressr::progressor(steps = nrow(index_table))
       furrr::future_map2(index_table$i, index_table$j, \(i, j) {
         pb()
@@ -37,14 +37,14 @@ compute_elastic_distance_one_set <- function(f_array, time) {
       }, .options = furrr::furrr_options(seed = TRUE))
     }
 
-    Dlist <- .pairwise_distances(index_table)
+    Dlist <- .pairwise_distances1(index_table)
 
     Dx_tot <- purrr::map_dbl(Dlist, "dx")
     Dy_tot <- purrr::map_dbl(Dlist, "d")
   }
   #Unidimensional case:
   else {
-    .pairwise_distances <- function(index_table) {
+    .pairwise_distances2 <- function(index_table) {
       pb <- progressr::progressor(steps = nrow(index_table))
       furrr::future_map2(index_table$i, index_table$j, \(i, j) {
         pb()
@@ -56,7 +56,7 @@ compute_elastic_distance_one_set <- function(f_array, time) {
       }, .options = furrr::furrr_options(seed = TRUE))
     }
 
-    Dlist <- .pairwise_distances(index_table)
+    Dlist <- .pairwise_distances2(index_table)
 
     Dx_tot <- purrr::map_dbl(Dlist, "Dx")
     Dy_tot <- purrr::map_dbl(Dlist, "Dy")
@@ -144,16 +144,16 @@ compute_elastic_distance_two_sets = function(f_array1, f_array2, time) {
 
   # Unidimensional case:
   else {
-    .pairwise_distances <- function(f_array1, f_array2, time) {
-      N1 <- dim(f_array1)[3]
-      N2 <- dim(f_array2)[3]
+    .pairwise_distances <- function(f1, f2, time) {
+      N1 <- dim(f1)[3]
+      N2 <- dim(f2)[3]
       pb <- progressr::progressor(steps = N1)
       furrr::future_walk(1:N1, \(n1) {
         pb()
         out <- purrr::map(1:N2, \(n2) {
           fdasrvf::elastic.distance(
-            f1 = f_array1[1, , n1],
-            f2 = f_array2[1, , n2],
+            f1 = f1[1, , n1],
+            f2 = f2[1, , n2],
             time = time
           )
         })
@@ -163,7 +163,7 @@ compute_elastic_distance_two_sets = function(f_array1, f_array2, time) {
     }
   }
 
-  Dlist = .pairwise_distances(f_array1, f_array2, time)
+  Dlist = .pairwise_distances(f1 = f_array1, f2 = f_array2, time = time)
 
   list(Dx_tot = Dx_tot, Dy_tot = Dy_tot)
 
