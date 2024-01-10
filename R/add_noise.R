@@ -35,8 +35,6 @@
 #' @param qn array of dimension \eqn{L \times M \times N} : contains the set of \eqn{N}
 #' functions for which `template_q` is the template. Functions are of the same
 #' dimension \eqn{L} and evaluated at the same points \eqn{M} as `template_q`
-#' @param time vector of dimension \eqn{M} : specifies the grid on which the functions
-#' are evaluated. If `NULL`, it is set as an uniform grid in \eqn{[0,1]}.
 #' @param cv scalar, only non-negative values are accepted : coefficient of variation (see Details).
 #' @param is_constrained vector of size \eqn{L} : each element indicates
 #' whether the dimension \eqn{l = 1,\dots,L} is constrained and how (see Details)
@@ -49,7 +47,7 @@
 #'
 #' @export
 add_noise = function(
-    qn, template_q, time = NULL, cv = 0.0, is_constrained = NULL, use_verbose = FALSE
+    qn, template_q, cv = 0.0, is_constrained = NULL, use_verbose = FALSE
     ) {
 
   dims = dim(qn)
@@ -61,10 +59,9 @@ add_noise = function(
   L <- dims[1]
   M <- dims[2]
   N <- dims[3]
-  if (is.null(time))
-    time = seq(0, 1, length.out = M)
-  if (length(time) != M)
-    cli::cli_abort("Error: time must be of length M")
+
+  time = seq(0, 1, length.out = M)
+
   dims_template = dim(template_q)
   if (sum(dims_template[1:2] != dims[1:2])>0)
     cli::cli_abort("Error: dimensions of qn and template_qn must be coherent")
@@ -86,35 +83,34 @@ add_noise = function(
 
 
   # Mean function
-  MU = matrix(template_q[,,1], nrow=L, ncol=M)
+  MU = matrix(template_q[, , 1], nrow = L, ncol = M)
 
   if (do_positive) {
     for (l in which(is_constrained != "real")){
       if (is_constrained[l] == "pos") {
-        MU[l,] = sqrt(MU[l,])
-        qn[l,,] = sqrt(qn[l,,])
+        MU[l, ] = sqrt(MU[l, ])
+        qn[l, , ] = sqrt(qn[l, , ])
       }
       if (is_constrained[l] == "strict-pos"){
-        MU[l,] = log(MU[l,])
-        qn[l,,] = log(qn[l,,])
+        MU[l, ] = log(MU[l, ])
+        qn[l, , ] = log(qn[l, , ])
       }
     }
   }
 
   # Covariance operator
-  norm_MU_2 = apply(MU, 1, function(y){integrate(time,y^2)})
+  norm_MU_2 = apply(MU, 1, function(y){integrate(time, y^2)})
   cv = cv * norm_MU_2
 
-  temp_list = purrr::map(1:L, \(l){t(qn[l,,])})
+  temp_list = purrr::map(1:L, \(l){t(qn[l, , ])})
   qn_mfData = roahd::mfData(
-    grid=time,
-    Data_list=temp_list
+    grid = time,
+    Data_list = temp_list
   )
-
 
   COV_true = roahd::cov_fun(qn_mfData)
   COV = purrr::map(1:L, \(l){
-    COV_true_temp = COV_true[[paste0(l,"_",l)]]$values
+    COV_true_temp = COV_true[[paste0(l, "_", l)]]$values
 
     my_fun_min = function(par) {
       COV_ab = roahd::exp_cov_function(time, alpha = par[1], beta = par[2])
@@ -137,7 +133,7 @@ add_noise = function(
   # Correlation between dimensions (only if L>1)
   if (L>1) {
     cor_temp = roahd::cor_spearman(qn_mfData)
-    RHO = unlist(purrr::map(1:(L-1), \(l){cor_temp[l,(l+1):L]}))
+    RHO = unlist(purrr::map(1:(L-1), \(l){cor_temp[l, (l+1):L]}))
   }
 
 

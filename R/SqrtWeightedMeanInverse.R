@@ -17,7 +17,7 @@
 #'  Computational Statistics and Data Analysis (2012), 10.1016/j.csda.2012.12.001.
 #' @export
 #' @examples
-#' gamI <- SqrtWeightedMeanInverse(fdasrvf::simu_warp$warping_functions)
+#' gamI <- SqrtMeanInverse(simu_warp$warping_functions)
 SqrtWeightedMeanInverse <- function(gam, wts = NULL){
 
   TT = nrow(gam)
@@ -25,13 +25,13 @@ SqrtWeightedMeanInverse <- function(gam, wts = NULL){
   eps = .Machine$double.eps
   time <- seq(0, 1, length.out=TT)
 
-  if(is.null(wts))
+  if(s.null(wts))
     wts = rep(1, n)
 
   psi = matrix(0, TT, n)
   binsize <- mean(diff(time))
   for (i in 1:n){
-    psi[,i] = sqrt(fdasrvf::gradient(gam[, i],binsize))
+    psi[,i] = sqrt(gradient(gam[, i],binsize))
   }
 
   # Find Direction for initialization

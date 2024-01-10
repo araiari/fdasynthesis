@@ -25,8 +25,7 @@ estimate_optimal_w_a = function(
     method = "complete",
     iter = n_iterations
   )
-  w_a = out$alpha
-  w_a
+  out$alpha
 }
 
 

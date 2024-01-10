@@ -32,7 +32,6 @@
 multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
                                                 wts = NULL)
 {
-  tmp = dim(beta)
   L = tmp[1]
   M = tmp[2]
   N = tmp[3]
@@ -41,6 +40,7 @@ multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
   if (!is_weighted)
     wts = 1:N
 
+  tmp = dim(beta)
   time1 <- seq(0, 1, length.out = M)
   q = array(0, dim = c(L, M, N))
   for (ii in 1:N) {
@@ -65,7 +65,7 @@ multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
   cat("\nInitializing...\n")
   gam = matrix(0, nrow = M, ncol = N)
   for (k in 1:N) {
-    out = find_rotation_seed_unqiue(mu, q[, , k], lambda)
+    out = find_rotation_seed_unqiue(mu, q[, , k], 'O', FALSE, FALSE, lambda)
     gam[, k] = out$gambest
   }
 
@@ -81,7 +81,7 @@ multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
     for (i in 1:N) {
       q1 = q[, , i]
 
-      out = find_rotation_seed_unqiue(mu, q1, lambda)
+      out = find_rotation_seed_unqiue(mu, q1, 'O', FALSE, FALSE, lambda)
       dist = sqrt( sum((mu - out$q2best)^2) / M)
 
       qn[, , i] = out$q2best
@@ -91,16 +91,14 @@ multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
 
       sumd[itr + 1] = sumd[itr + 1] + dist^2
     }
-    cat("\nQui1\n")
+
 
     # Mean computation
     v_w = array(sapply(1:N, function(n) qn[, , n] * wts[n]), dim = dim(qn))
-    cat("\nQui2\n")
     vbar = rowSums(v_w, dims = 2) / sum(wts)
-    cat("\nQui3\n")
-    bbar = fdasrvf::q_to_curve(vbar)
+    bbar = fdasrvf::q_to_curve(v_w)
 
-    cat("\nQui4\n")
+
     normbar[itr] = sqrt(innerprod_q2(vbar, vbar))
 
     # Se le distanze dalla media sono aumentate, esci

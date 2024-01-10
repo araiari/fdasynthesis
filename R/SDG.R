@@ -10,7 +10,7 @@
 #' functions. For each dimension of the function, it states whether values are
 #' (strictly) positive or (strictly) monotone. Accepted values are: `pos` (positive functions),
 #' `strict-pos` (non-negative functions), `mon` (for monotone increasing functions),
-#' `strict-mon` (for strictly-monotone increasing functions)
+#' `strict-mon` (for strictly-monotone increasing functions).
 #'
 #' Remark: if `D_list` is not provided, the elastic distances are computed.
 #' This may slow down the process of data generation.
@@ -21,59 +21,60 @@
 #' The computation may slow down the process of data generation.
 #'
 #'
-#' @param fun_array array of sizes \eqn{L \times M \times N} : contains the values
-#' of the \eqn{N} original functions of dimension \eqn{L} evaluated on \eqn{M} points.
-#' @param i_synth integer vector of length \eqn{N_{synth} \leq N}: subset of the curves
-#' to be synthetized. If `NULL` all the curves are synthetized.
+#' @param fun_array array of sizes \eqn{L \times M \times N} : contains the
+#'   values of the \eqn{N} original functions of dimension \eqn{L} evaluated on
+#'   \eqn{M} points.
+#' @param i_synth integer vector of length \eqn{N_{synth} \leq N}: indices of
+#'   the subset of the curves to be synthetized. If `NULL` all the curves are
+#'   synthetized.
 #' @param time vector of size \eqn{M} : specifies the grid on which the curves are
-#' evaluated. If `NULL`, it is set as an uniform grid in \eqn{[0,1]}.
+#'   evaluated. If `NULL`, it is set as an uniform grid in \eqn{[0,1]}.
 #' @param D_list list of two elements `Dx_tot` and `Dy_tot` for (respectively)
-#' phase and amplitude distance matrices.
-#' - If `w_a` is not specified, list of two elements, each of which is either a distance
-#' matrix of dimension \eqn{N \times N} : elastic distances
+#'   phase and amplitude distance matrices.
+#' - If `w_a` is not specified, list of two elements, each of which is either a
+#' distance matrix of dimension \eqn{N \times N} : elastic distances
 #' between all the functions.
-#' - If `w_a` is specified, list of two elements, each of which is either a distance
-#' matrix of dimension \eqn{N_{synth} \times N} : elastic
+#' - If `w_a` is specified, list of two elements, each of which is either a
+#' distance matrix of dimension \eqn{N_{synth} \times N} : elastic
 #' distances between functions to be synthetized and all the functions.
-#' - If `NULL` it is computed.
+#' - If `NULL` it is computed (see Details).
 #' @param w_a scalar with values in \eqn{[0,1]} : weights of the
-#' amplitude distance in the linear combination of the elastic distances. If `NULL`
-#' it is estimated.
+#'   amplitude distance in the linear combination of the elastic distances.
+#'   If `NULL` it is estimated (see Details).
 #' @param K scalar integer : number of neighbors to be considered.
 #' @param alpha_0 scalar, with \eqn{\alpha_0 >0} : concentation parameter of the
-#' Dirichlet distribution from which the weights of neighbors are sampled.
+#'   Dirichlet distribution from which the weights of neighbors are sampled.
 #' @param beta_0 scalar, with \eqn{\beta_0 > 0} : rate parameter
-#' weighting the inverse distances in the weight computation.
+#'   weighting the inverse distances in the weight computation.
 #' @param add_noise boolean : whether noise should be added to the weighted mean.
 #'  Defaults to `FALSE`.
 #' @param is_constrained vector of size \eqn{L} : each element indicates any constraint of
-#' the dimension \eqn{l = 1,\dots,L}. It is considered only if `add_noise = TRUE` (see Details)
-#' @param cv scalar with \eqn{cv > 0} : coefficient of variation of the covariance
-#' amplitude with respect to the mean squared norm. It is the input of the function add_noise.
+#'   the dimension \eqn{l = 1,\dots,L}. It is considered only if
+#'   `add_noise = TRUE` (see Details).
+#' @param cv scalar with \eqn{cv > 0} : coefficient of variation of the
+#'   covariance amplitude with respect to the mean squared norm. It is the
+#'   input of the function add_noise.
 #' @param clust_labels vector of size \eqn{N} : specifies the labels
 #' of the functions. If provided, the \eqn{K} neighbors are searched among the
 #' subset of functions with the same label. Defaults to `NULL`.
 #' @param use_verbose boolean : specifying whether to display information about
 #'   the calculations in the console. Defaults to `FALSE`.
 #'
-#' @return a list of the following elements:
+#' @return A list of the following elements:
 #' - `fun_s_array` array of sizes \eqn{L \times M \times N_{synth}} : contains the values
-#' of the \eqn{N} synthetic functions of dimension \eqn{L} evaluated on \eqn{M}
+#' of the \eqn{N_{synth}} synthetic functions of dimension \eqn{L} evaluated on \eqn{M}
 #' points.
 #'
 #' @export
 SDG = function (
-    fun_array, i_synth = NULL, time = NULL, D_list = NULL, w_a = NULL, K = 5, alpha_0 = 1,
-    beta_0 = 1, add_noise = F, is_constrained = NULL, cv = 0,
-    clust_labels = NULL, use_verbose = F
+    fun_array, i_synth = NULL, time = NULL, D_list = NULL, w_a = NULL, K = 5,
+    alpha_0 = 1, beta_0 = 1, add_noise = FALSE, is_constrained = NULL, cv = 0,
+    clust_labels = NULL, use_verbose = FALSE
 ) {
 
 
   dims = dim(fun_array)
-  if (length(dims) == 2) { #if matrix -> unidimensional functions
-    fun_array = array(fun_array, dim=c(1,dims))
-    dims = dim(fun_array)
-  }
+
   L = dims[1]
   M = dims[2]
   N = dims[3]
@@ -167,7 +168,7 @@ SDG = function (
 
 
   # Synthetic data generation
-  fun_s_array = array(0, dim=c(L, M, N_synth))
+  fun_s_array = array(0, dim=c(M, L, N_synth))
 
   if (use_verbose)
     cli::cli_alert_info("Starting SDG - iteration...")
@@ -186,30 +187,29 @@ SDG = function (
       beta_0 = beta_0
       )
 
-    #Alignment
-    res = srvf_align(
-      f = fun_array[ , , i_other[out_weight$index_k]],
-      time = time,
-      wgt = out_weight$p_k,
-      centroid_type = 'mean'
+    #starting point
+    f0_temp = apply(fun_array[, 1, i_other[out_weight$index_k]], 1, weighted.mean, wts)
+
+    #karcher mean
+    res = multivariate_weighted_karcher_mean(
+      beta = fun_array[ , , i_other[out_weight$index_k]],
+      wts = out_weight$p_k
     )
 
     #SDG as the mean
     if (!add_noise)
-      fun_s_array[ , ,i] = res$template
+      fun_s_array[ , ,i] = res$betamean + f0_temp
     #SDG as the mean + noise
     else {
       q_s_temp = add_noise(
         qn = res$qn,
-        template_q = res$template.q,
-        time = time,
+        template_q = res$mu,
         cv = cv,
         is_constrained = is_constrained_2,
         use_verbose = use_verbose
         )
-      f0_temp = res$template_start
 
-      fun_s_array[ , , i] = srvf_to_f(q_s_temp, time, f0_temp, multidimensional = (L>1))
+      fun_s_array[ , , i] = fdasrvf::q_to_curve(q_s_temp) + f0_temp
     }
 
   }
