@@ -4,14 +4,7 @@
 \alias{add_noise}
 \title{Add Noise to the Template}
 \usage{
-add_noise(
-  qn,
-  template_q,
-  time = NULL,
-  cv = 0,
-  is_constrained = NULL,
-  use_verbose = FALSE
-)
+add_noise(qn, template_q, cv = 0, is_constrained = NULL, use_verbose = FALSE)
 }
 \arguments{
 \item{qn}{array of dimension \eqn{L \times M \times N} : contains the set of \eqn{N}
@@ -21,9 +14,6 @@ dimension \eqn{L} and evaluated at the same points \eqn{M} as \code{template_q}}
 \item{template_q}{either array of dimension \eqn{L \times M \times 1} or matrix
 of dimension \eqn{L \times M} : contains the template function to be perrurbed
 by adding noise. The function is of dimension \eqn{L} and is evaluated in \eqn{M} points.}
-
-\item{time}{vector of dimension \eqn{M} : specifies the grid on which the functions
-are evaluated. If \code{NULL}, it is set as an uniform grid in \eqn{[0,1]}.}
 
 \item{cv}{scalar, only non-negative values are accepted : coefficient of variation (see Details).}
 
