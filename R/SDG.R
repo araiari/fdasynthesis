@@ -188,7 +188,7 @@ SDG = function (
       )
 
     #starting point
-    f0_temp = apply(fun_array[, 1, i_other[out_weight$index_k]], 1, weighted.mean, wts)
+    f0_temp = apply(fun_array[, 1, i_other[out_weight$index_k]], 1, stats::weighted.mean, out_weight$p_k)
 
     #karcher mean
     res = multivariate_weighted_karcher_mean(
