@@ -13,19 +13,21 @@ SDG(
   K = 5,
   alpha_0 = 1,
   beta_0 = 1,
-  add_noise = F,
+  add_noise = FALSE,
   is_constrained = NULL,
   cv = 0,
   clust_labels = NULL,
-  use_verbose = F
+  use_verbose = FALSE
 )
 }
 \arguments{
-\item{fun_array}{array of sizes \eqn{L \times M \times N} : contains the values
-of the \eqn{N} original functions of dimension \eqn{L} evaluated on \eqn{M} points.}
+\item{fun_array}{array of sizes \eqn{L \times M \times N} : contains the
+values of the \eqn{N} original functions of dimension \eqn{L} evaluated on
+\eqn{M} points.}
 
-\item{i_synth}{integer vector of length \eqn{N_{synth} \leq N}: subset of the curves
-to be synthetized. If \code{NULL} all the curves are synthetized.}
+\item{i_synth}{integer vector of length \eqn{N_{synth} \leq N}: indices of
+the subset of the curves to be synthetized. If \code{NULL} all the curves are
+synthetized.}
 
 \item{time}{vector of size \eqn{M} : specifies the grid on which the curves are
 evaluated. If \code{NULL}, it is set as an uniform grid in \eqn{[0,1]}.}
@@ -33,18 +35,18 @@ evaluated. If \code{NULL}, it is set as an uniform grid in \eqn{[0,1]}.}
 \item{D_list}{list of two elements \code{Dx_tot} and \code{Dy_tot} for (respectively)
 phase and amplitude distance matrices.
 \itemize{
-\item If \code{w_a} is not specified, list of two elements, each of which is either a distance
-matrix of dimension \eqn{N \times N} : elastic distances
+\item If \code{w_a} is not specified, list of two elements, each of which is either a
+distance matrix of dimension \eqn{N \times N} : elastic distances
 between all the functions.
-\item If \code{w_a} is specified, list of two elements, each of which is either a distance
-matrix of dimension \eqn{N_{synth} \times N} : elastic
+\item If \code{w_a} is specified, list of two elements, each of which is either a
+distance matrix of dimension \eqn{N_{synth} \times N} : elastic
 distances between functions to be synthetized and all the functions.
-\item If \code{NULL} it is computed.
+\item If \code{NULL} it is computed (see Details).
 }}
 
 \item{w_a}{scalar with values in \eqn{[0,1]} : weights of the
-amplitude distance in the linear combination of the elastic distances. If \code{NULL}
-it is estimated.}
+amplitude distance in the linear combination of the elastic distances.
+If \code{NULL} it is estimated (see Details).}
 
 \item{K}{scalar integer : number of neighbors to be considered.}
 
@@ -58,10 +60,12 @@ weighting the inverse distances in the weight computation.}
 Defaults to \code{FALSE}.}
 
 \item{is_constrained}{vector of size \eqn{L} : each element indicates any constraint of
-the dimension \eqn{l = 1,\dots,L}. It is considered only if \code{add_noise = TRUE} (see Details)}
+the dimension \eqn{l = 1,\dots,L}. It is considered only if
+\code{add_noise = TRUE} (see Details).}
 
-\item{cv}{scalar with \eqn{cv > 0} : coefficient of variation of the covariance
-amplitude with respect to the mean squared norm. It is the input of the function add_noise.}
+\item{cv}{scalar with \eqn{cv > 0} : coefficient of variation of the
+covariance amplitude with respect to the mean squared norm. It is the
+input of the function add_noise.}
 
 \item{clust_labels}{vector of size \eqn{N} : specifies the labels
 of the functions. If provided, the \eqn{K} neighbors are searched among the
@@ -71,10 +75,10 @@ subset of functions with the same label. Defaults to \code{NULL}.}
 the calculations in the console. Defaults to \code{FALSE}.}
 }
 \value{
-a list of the following elements:
+A list of the following elements:
 \itemize{
 \item \code{fun_s_array} array of sizes \eqn{L \times M \times N_{synth}} : contains the values
-of the \eqn{N} synthetic functions of dimension \eqn{L} evaluated on \eqn{M}
+of the \eqn{N_{synth}} synthetic functions of dimension \eqn{L} evaluated on \eqn{M}
 points.
 }
 }
@@ -88,7 +92,7 @@ It can handle multidimensional functions of \eqn{L} dimensions.
 functions. For each dimension of the function, it states whether values are
 (strictly) positive or (strictly) monotone. Accepted values are: \code{pos} (positive functions),
 \code{strict-pos} (non-negative functions), \code{mon} (for monotone increasing functions),
-\code{strict-mon} (for strictly-monotone increasing functions)
+\code{strict-mon} (for strictly-monotone increasing functions).
 
 Remark: if \code{D_list} is not provided, the elastic distances are computed.
 This may slow down the process of data generation.
