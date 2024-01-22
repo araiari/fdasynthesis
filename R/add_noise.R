@@ -51,14 +51,17 @@ add_noise = function(
     ) {
 
   dims = dim(qn)
+
   if (length(dims) == 2) {
     dim(qn) <- c(1, dims)
     dims <- dim(qn)
     cli::cli_alert_warning("Warning: qn must be provided as an array of dimensions L * M * N. Now: L=1")
   }
+
   L <- dims[1]
   M <- dims[2]
   N <- dims[3]
+
 
   time = seq(0, 1, length.out = M)
 
