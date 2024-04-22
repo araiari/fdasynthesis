@@ -29,9 +29,13 @@
 #' @examples
 #' out <- multivariate_weighted_karcher_mean(fdasrvf::beta[, , 1, 1:2], maxit = 2)
 #' # note: use more functions, small for speed
-multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
-                                                wts = NULL)
-{
+multivariate_weighted_karcher_mean <- function (
+    beta,
+    lambda = 0.0,
+    maxit = 20,
+    wts = NULL
+) {
+
   tmp = dim(beta)
   L = tmp[1]
   M = tmp[2]
@@ -39,13 +43,12 @@ multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
 
   is_weighted = !(is.null(wts))
   if (!is_weighted)
-    wts = 1:N
+    wts = rep(1, N)
 
   time1 <- seq(0, 1, length.out = M)
   q = array(0, dim = c(L, M, N))
   for (ii in 1:N) {
-    beta1 = beta[ , , ii]
-    out = fdasrvf::curve_to_q(beta1, FALSE)
+    out = fdasrvf::curve_to_q(beta[, , ii], scale = FALSE)
     q[, , ii] = out$q
   }
 
@@ -85,7 +88,7 @@ multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
       dist = sqrt( sum((mu - out$q2best)^2) / M)
 
       qn[, , i] = out$q2best
-      betan[, , i] = fdasrvf::q_to_curve(out$q2best)
+      betan[, , i] = fdasrvf::q_to_curve(out$q2best, scale = 1)
 
       gam[,i] = out$gambest
 
@@ -98,7 +101,7 @@ multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
     cat("\nQui2\n")
     vbar = rowSums(v_w, dims = 2) / sum(wts)
     cat("\nQui3\n")
-    bbar = fdasrvf::q_to_curve(vbar)
+    bbar = fdasrvf::q_to_curve(vbar, scale = 1)
 
     cat("\nQui4\n")
     normbar[itr] = sqrt(innerprod_q2(vbar, vbar))
@@ -115,12 +118,11 @@ multivariate_weighted_karcher_mean <- function (beta, lambda = 0.0, maxit = 20,
   }
 
 
-  # Normalization step ????????????????????????????????
-  # Lo devo fare? Lo devo fare qui? Lo devo fare cosi?
+  # Normalization step
   gam = t(gam)
   gamI = SqrtWeightedMeanInverse(t(gam))
   betamean = group_action_by_gamma_coord(betamean, gamI)
-  mu = fdasrvf::curve_to_q(betamean, FALSE)$q
+  mu = fdasrvf::curve_to_q(betamean, scale = FALSE)$q
 
 
   ifelse(is_weighted, type <- "Karcher Weighted Median", type <- "Karcher Mean")

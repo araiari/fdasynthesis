@@ -30,7 +30,7 @@
 #' @param time vector of size \eqn{M} : specifies the grid on which the curves are
 #'   evaluated. If `NULL`, it is set as an uniform grid in \eqn{[0,1]}.
 #' @param D_list list of two elements `Dx_tot` and `Dy_tot` for (respectively)
-#'   phase and amplitude distance matrices.
+#'   phase and amplitude distance matrices, provided as `matrix` objects.
 #' - If `w_a` is not specified, list of two elements, each of which is either a
 #' distance matrix of dimension \eqn{N \times N} : elastic distances
 #' between all the functions.
@@ -67,9 +67,19 @@
 #'
 #' @export
 SDG = function (
-    fun_array, i_synth = NULL, time = NULL, D_list = NULL, w_a = NULL, K = 5,
-    alpha_0 = 1, beta_0 = 1, add_noise = FALSE, is_constrained = NULL, cv = 0,
-    clust_labels = NULL, use_verbose = FALSE
+    fun_array,
+    i_synth = NULL,
+    time = NULL,
+    D_list = NULL,
+    w_a = NULL,
+    K = 5,
+    alpha_0 = 1,
+    beta_0 = 1,
+    add_noise = FALSE,
+    is_constrained = NULL,
+    cv = 0,
+    clust_labels = NULL,
+    use_verbose = FALSE
 ) {
 
 
@@ -86,11 +96,11 @@ SDG = function (
 
   #Check incompatibilities
   if (use_verbose)
-    cli::cli_alert_info("Check possible incompatibilities")
+    cli::cli_alert_info("Check possible incompatibilities...")
   if (is.null(time))
     time = seq(0,1,length.out=M)
   if (length(time) != M)
-    cli::cli_abort("Error: time must be of length M")
+    cli::cli_abort("Error: `time` must be of length M")
 
   if (add_noise && !is.null(is_constrained)) {
     if (length(is_constrained) != L)
@@ -126,7 +136,7 @@ SDG = function (
     cluster_search = TRUE
   }
   if (use_verbose)
-    cli::cli_alert_info("End: no incompatibilities found")
+    cli::cli_alert_info("End: no incompatibilities found!")
 
 
   if (do_positive) {
@@ -141,29 +151,29 @@ SDG = function (
   # Computation of the elastic distances
   if (is.null(D_list)) {
     if (use_verbose)
-      cli::cli_alert_info("Starting the computation of elastic distances")
+      cli::cli_alert_info("Starting the computation of elastic distances...")
     if (!sub_synth || estimate_w_a)
       D_list = compute_elastic_distance_one_set(fun_array, time)
     else
       D_list = compute_elastic_distance_two_sets(fun_array[,,i_synth], fun_array, time)
     if (use_verbose)
-      cli::cli_alert_info("End of the computation of elastic distances")
+      cli::cli_alert_info("End of the computation of elastic distances!")
   }
 
 
   # Computation of the total distance as convex combination of elastic distances
   if (estimate_w_a){
     if (use_verbose)
-      cli::cli_alert_info("Starting the computation of the optimal {.arg w_a}")
+      cli::cli_alert_info("Starting the computation of the optimal {.arg w_a}...")
     w_a = estimate_optimal_w_a (D1 = D_list$Dy_tot, D2 = D_list$Dx_tot)
     if (use_verbose)
-      cli::cli_alert_info("End of the computation of the optimal {.arg w_a}")
+      cli::cli_alert_info("End of the computation of the optimal {.arg w_a}!")
     if (sub_synth) {
       D_list$Dy_tot = D_list$Dy_tot[i_synth,]
       D_list$Dx_tot = D_list$Dx_tot[i_synth,]
     }
   }
-  Dtot = w_a * as.matrix(D_list$Dy_tot) + (1-w_a) * as.matrix(D_list$Dx_tot)
+  Dtot = w_a * D_list$Dy_tot + (1-w_a) * D_list$Dx_tot
 
 
 
@@ -190,11 +200,13 @@ SDG = function (
     #starting point
     f0_temp = apply(fun_array[, 1, i_other[out_weight$index_k]], 1, stats::weighted.mean, out_weight$p_k)
 
-    #karcher mean
+    #karcher #################################################### Da rifare
     res = multivariate_weighted_karcher_mean(
       beta = fun_array[ , , i_other[out_weight$index_k]],
       wts = out_weight$p_k
     )
+
+    cli::cli_alert_info("Mean computed")
 
     #SDG as the mean
     if (!add_noise)
@@ -209,7 +221,7 @@ SDG = function (
         use_verbose = use_verbose
         )
 
-      fun_s_array[ , , i] = fdasrvf::q_to_curve(q_s_temp) + f0_temp
+      fun_s_array[ , , i] = fdasrvf::q_to_curve(q_s_temp, scale = 1) + f0_temp
     }
 
   }
