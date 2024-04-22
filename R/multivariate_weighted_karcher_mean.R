@@ -6,13 +6,14 @@
 #' @param beta An array of sizes \eqn{L \times M \times N} and it is
 #'   interpreted as a sample of \eqn{N} \eqn{L}-dimensional curves observed on a
 #'   grid of size \eqn{M}.
-#' @param lambda A numeric value specifying the elasticity. Defaults to `0.0`.
-#' @param maxit Maximum number of iterations.
 #' @param wts Vector of length \eqn{N} with weights to be assigned to each
 #'  curve. Use `NULL` for unweighted mean. Defaults to `NULL`.
-#' @return Returns a list containing \item{mu}{mean srvf}
+#' @param lambda A numeric value specifying the elasticity. Defaults to `0.0`.
+#' @param maxit Maximum number of iterations.
+#' @param ncores XXX
+#' @return Returns a list containing \item{qmu}{mean srvf}
 #' \item{betamean}{(Weighted) mean curve}
-#' \item{mu}{(Weighted) mean srvf}
+#' \item{qmu}{(Weighted) mean srvf}
 #' \item{beta}{Array of original curves}
 #' \item{q}{Array of original srvfs}
 #' \item{betan}{Array of aligned curves}
@@ -25,15 +26,13 @@
 #' @references Srivastava, A., Klassen, E., Joshi, S., Jermyn, I., (2011). Shape
 #'    analysis of elastic curves in euclidean spaces. Pattern Analysis and Machine
 #'    Intelligence, IEEE Transactions on 33 (7), 1415-1428.
-#' @export
-#' @examples
-#' out <- multivariate_weighted_karcher_mean(fdasrvf::beta[, , 1, 1:2], maxit = 2)
-#' # note: use more functions, small for speed
+#' @importFrom foreach %dopar%
 multivariate_weighted_karcher_mean <- function (
     beta,
+    wts = NULL,
     lambda = 0.0,
     maxit = 20,
-    wts = NULL
+    ncores = 1L
 ) {
 
   tmp = dim(beta)
@@ -52,8 +51,46 @@ multivariate_weighted_karcher_mean <- function (
     q[, , ii] = out$q
   }
 
-  mu = q[, , 1]
-  bmu = beta[, , 1]
+  # Compute number of cores to use
+  navail <- max(parallel::detectCores() - 1, 1)
+
+  if (ncores > navail) {
+    cli::cli_alert_warning(
+      "The number of requested cores ({ncores}) is larger than the number of
+      available cores ({navail}). Using the maximum number of available cores..."
+    )
+    ncores <- navail
+  }
+
+  if (ncores > 1L) {
+    cl <- parallel::makeCluster(ncores)
+    doParallel::registerDoParallel(cl)
+    on.exit(parallel::stopCluster(cl))
+  } else
+    foreach::registerDoSEQ()
+
+  # Initialize the mean as the medoid
+  v_w = array(sapply(1:N, function(n) q[, , n] * wts[n]), dim = dim(q))
+  qmu = rowSums(v_w, dims = 2) / sum(wts)
+
+  n <- NULL
+  dists <- foreach::foreach(
+    n = 1:N, .combine = "c", .packages = 'fdasrvf'
+    ) %dopar% {
+    find_rotation_seed_unique(
+      qmu, q[ , , n],
+      mode = mode,
+      alignment = TRUE,
+      rotation = FALSE,
+      scale = FALSE
+    )$d
+  }
+
+  medoid_idx <- which.min(dists)
+  qmu <- q[, , medoid_idx]
+  bmu = beta[, , medoid_idx]
+
+  # Other initializations
   delta = 0.5
   tolv = 1e-04
   told = 5 * 0.001
@@ -64,54 +101,66 @@ multivariate_weighted_karcher_mean <- function (
   qn = array(0, dim = c(L, M, N))
   normbar = rep(0, maxit + 1)
 
-
-  cat("\nInitializing...\n")
-  gam = matrix(0, nrow = M, ncol = N)
-  for (k in 1:N) {
-    out = find_rotation_seed_unqiue(mu, q[, , k], lambda) ##
-    gam[, k] = out$gambest
-  }
-
-  gamI = SqrtWeightedMeanInverse(gam) ##
-  bmu = group_action_by_gamma_coord(bmu, gamI) ##
-  mu = fdasrvf::curve_to_q(bmu, FALSE)$q
-  mu[is.nan(mu)] = 0
+  # cat("\nInitializing...\n")
+  # gam = matrix(0, nrow = M, ncol = N)
+  # for (k in 1:N) {
+  #   out = find_rotation_seed_unique(qmu, q[, , k], lambda, rotation=FALSE, scale=FALSE) ##
+  #   gam[, k] = out$gambest
+  # }
+  #
+  # gamI = sqrt_weighted_mean_inverse(gam)
+  # bmu = group_action_by_gamma_coord(bmu, gamI) ##
+  # qmu = fdasrvf::curve_to_q(bmu, FALSE)$q
+  # qmu[is.nan(qmu)] = 0
 
   while (itr < maxit) {
-    cat(sprintf("Iteration: %d\n", itr))
-    mu = mu
+    # cat(sprintf("Iteration: %d\n", itr))
 
-    for (i in 1:N) {
-      q1 = q[, , i]
+    alignment_step <- foreach::foreach(
+      n = 1:N,
+      .combine = cbind,
+      .packages = "fdasrvf") %dopar% {
+        out <- find_rotation_seed_unique(
+          q1 = qmu,
+          q2 = q[, , n],
+          mode = mode,
+          alignment = TRUE,
+          rotation = FALSE,
+          scale = FALSE,
+          lambda = lambda
+        )
+        list(d = out$d, q2n = out$q2best, gamn = out$gambest)
+      }
 
-      out = find_rotation_seed_unqiue(mu, q1, lambda) ##
-      dist = sqrt( sum((mu - out$q2best)^2) / M)
+    d <- unlist(alignment_step[1, ])
+    dim(d) <- N
+    sumd[itr + 1] <- sum(d^2)
 
-      qn[, , i] = out$q2best
-      betan[, , i] = fdasrvf::q_to_curve(out$q2best, scale = 1)
+    qn <- unlist(alignment_step[2, ])
+    dim(qn) <- c(L, M, N)
 
-      gam[,i] = out$gambest
-
-      sumd[itr + 1] = sumd[itr + 1] + dist^2
-    }
-    cat("\nQui1\n")
+    gam <- unlist(alignment_step[3, ])
+    dim(gam) <- c(M, N)
 
     # Mean computation
     v_w = array(sapply(1:N, function(n) qn[, , n] * wts[n]), dim = dim(qn))
-    cat("\nQui2\n")
     vbar = rowSums(v_w, dims = 2) / sum(wts)
-    cat("\nQui3\n")
     bbar = fdasrvf::q_to_curve(vbar, scale = 1)
 
-    cat("\nQui4\n")
+    # # Mean computation alternativa ed equivalente 20240422
+    # v_w = array(sapply(1:N, function(n) betan[, , n] * wts[n]), dim = dim(betan))
+    # bbar = rowSums(v_w, dims = 2) / sum(wts)
+    # vbar = fdasrvf::curve_to_q(bbar, scale = FALSE)$q
+
     normbar[itr] = sqrt(innerprod_q2(vbar, vbar))
+
 
     # Se le distanze dalla media sono aumentate, esci
     if ((sumd[itr] - sumd[itr + 1]) < 0) { break }
     # Se le distanze dalla media sono diminuite a sufficienza e la norma della media non e troppo grande, esci
     if ((normbar[itr] <= tolv) || (abs(sumd[itr + 1] - sumd[itr]) <= told)) { break }
 
-    mu = vbar
+    qmu = vbar
     betamean = bbar
 
     itr = itr + 1
@@ -120,13 +169,24 @@ multivariate_weighted_karcher_mean <- function (
 
   # Normalization step
   gam = t(gam)
-  gamI = SqrtWeightedMeanInverse(t(gam)) ##
+  gamI = sqrt_weighted_mean_inverse(t(gam))
   betamean = group_action_by_gamma_coord(betamean, gamI) ##
-  mu = fdasrvf::curve_to_q(betamean, scale = FALSE)$q
+  qmu = fdasrvf::curve_to_q(betamean, scale = FALSE)$q
 
 
   ifelse(is_weighted, type <- "Karcher Weighted Median", type <- "Karcher Mean")
-  return(list(betamean = betamean, mu = mu, beta = beta, q = q, betan = betan,
-              qn = qn,  wts = wts, type = type, E = normbar[1:itr],
-              qun = sumd[1:itr]))
+
+  list(
+    betamean = betamean,
+    qmu = qmu,
+    beta = beta,
+    q = q,
+    betan = betan,
+    qn = qn,
+    wts = wts,
+    type = type,
+    E = normbar[1:itr],
+    qun = sumd[1:itr]
+  )
+
 }

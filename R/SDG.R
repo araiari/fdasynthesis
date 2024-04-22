@@ -79,7 +79,8 @@ SDG = function (
     is_constrained = NULL,
     cv = 0,
     clust_labels = NULL,
-    use_verbose = FALSE
+    use_verbose = FALSE,
+    ncores = 1L
 ) {
 
 
@@ -178,7 +179,7 @@ SDG = function (
 
 
   # Synthetic data generation
-  fun_s_array = array(0, dim=c(M, L, N_synth))
+  fun_s_array = array(0, dim=c(L, M, N_synth))
 
   if (use_verbose)
     cli::cli_alert_info("Starting SDG - iteration...")
@@ -203,10 +204,20 @@ SDG = function (
     #karcher #################################################### Da rifare
     res = multivariate_weighted_karcher_mean(
       beta = fun_array[ , , i_other[out_weight$index_k]],
-      wts = out_weight$p_k
+      wts = out_weight$p_k,
+      ncores = ncores
     )
+    # res = weighted_mean(
+    #   beta = fun_array[ , , i_other[out_weight$index_k]],
+    #   wts = out_weight$p_k,
+    #   mode = "O",
+    #   rotation = FALSE,
+    #   scale = FALSE,
+    #   ms = "mean",
+    #   ncores = 6
+    # )
 
-    cli::cli_alert_info("Mean computed")
+    # cli::cli_alert_info("Mean computed")
 
     #SDG as the mean
     if (!add_noise)

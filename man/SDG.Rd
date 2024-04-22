@@ -33,7 +33,7 @@ synthetized.}
 evaluated. If \code{NULL}, it is set as an uniform grid in \eqn{[0,1]}.}
 
 \item{D_list}{list of two elements \code{Dx_tot} and \code{Dy_tot} for (respectively)
-phase and amplitude distance matrices.
+phase and amplitude distance matrices, provided as \code{matrix} objects.
 \itemize{
 \item If \code{w_a} is not specified, list of two elements, each of which is either a
 distance matrix of dimension \eqn{N \times N} : elastic distances

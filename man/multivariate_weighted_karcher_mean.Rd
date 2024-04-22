@@ -4,24 +4,32 @@
 \alias{multivariate_weighted_karcher_mean}
 \title{Weighted Karcher Mean of Multivariate Functional Data}
 \usage{
-multivariate_weighted_karcher_mean(beta, lambda = 0, maxit = 20, wts = NULL)
+multivariate_weighted_karcher_mean(
+  beta,
+  wts = NULL,
+  lambda = 0,
+  maxit = 20,
+  ncores = 1L
+)
 }
 \arguments{
 \item{beta}{An array of sizes \eqn{L \times M \times N} and it is
 interpreted as a sample of \eqn{N} \eqn{L}-dimensional curves observed on a
 grid of size \eqn{M}.}
 
+\item{wts}{Vector of length \eqn{N} with weights to be assigned to each
+curve. Use \code{NULL} for unweighted mean. Defaults to \code{NULL}.}
+
 \item{lambda}{A numeric value specifying the elasticity. Defaults to \code{0.0}.}
 
 \item{maxit}{Maximum number of iterations.}
 
-\item{wts}{Vector of length \eqn{N} with weights to be assigned to each
-curve. Use \code{NULL} for unweighted mean. Defaults to \code{NULL}.}
+\item{ncores}{XXX}
 }
 \value{
-Returns a list containing \item{mu}{mean srvf}
+Returns a list containing \item{qmu}{mean srvf}
 \item{betamean}{(Weighted) mean curve}
-\item{mu}{(Weighted) mean srvf}
+\item{qmu}{(Weighted) mean srvf}
 \item{beta}{Array of original curves}
 \item{q}{Array of original srvfs}
 \item{betan}{Array of aligned curves}
@@ -34,10 +42,6 @@ Returns a list containing \item{mu}{mean srvf}
 \description{
 Calculates (weighted) Karcher mean of a collection of multivariate functional
 data using the elastic square-root velocity (srvf) framework.
-}
-\examples{
-out <- multivariate_weighted_karcher_mean(fdasrvf::beta[, , 1, 1:2], maxit = 2)
-# note: use more functions, small for speed
 }
 \references{
 Srivastava, A., Klassen, E., Joshi, S., Jermyn, I., (2011). Shape
