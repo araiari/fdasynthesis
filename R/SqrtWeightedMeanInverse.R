@@ -1,7 +1,10 @@
 #' SRVF transform of warping functions
 #'
 #' This function calculates the srvf of warping functions with corresponding
-#' shooting vectors and finds the inverse of (weighted) mean
+#' shooting vectors and finds the inverse of (weighted) mean.
+#'
+#' It is based on the `SqrtMeanInverse` funcion of the `fdasrvf` package, and
+#' enlarges it potentiality by computing the mean both non-weighted and weighted
 #'
 #' @param gam matrix (\eqn{N} x \eqn{M}) of \eqn{M} warping functions with
 #' \eqn{N} samples
@@ -18,7 +21,10 @@
 #' @export
 #' @examples
 #' gamI <- SqrtWeightedMeanInverse(fdasrvf::simu_warp$warping_functions)
-SqrtWeightedMeanInverse <- function(gam, wts = NULL){
+SqrtWeightedMeanInverse <- function(
+    gam,
+    wts = NULL
+){
 
   TT = nrow(gam)
   n = ncol(gam)

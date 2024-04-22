@@ -68,12 +68,12 @@ multivariate_weighted_karcher_mean <- function (
   cat("\nInitializing...\n")
   gam = matrix(0, nrow = M, ncol = N)
   for (k in 1:N) {
-    out = find_rotation_seed_unqiue(mu, q[, , k], lambda)
+    out = find_rotation_seed_unqiue(mu, q[, , k], lambda) ##
     gam[, k] = out$gambest
   }
 
-  gamI = SqrtWeightedMeanInverse(gam)
-  bmu = group_action_by_gamma_coord(bmu, gamI)
+  gamI = SqrtWeightedMeanInverse(gam) ##
+  bmu = group_action_by_gamma_coord(bmu, gamI) ##
   mu = fdasrvf::curve_to_q(bmu, FALSE)$q
   mu[is.nan(mu)] = 0
 
@@ -84,7 +84,7 @@ multivariate_weighted_karcher_mean <- function (
     for (i in 1:N) {
       q1 = q[, , i]
 
-      out = find_rotation_seed_unqiue(mu, q1, lambda)
+      out = find_rotation_seed_unqiue(mu, q1, lambda) ##
       dist = sqrt( sum((mu - out$q2best)^2) / M)
 
       qn[, , i] = out$q2best
@@ -120,8 +120,8 @@ multivariate_weighted_karcher_mean <- function (
 
   # Normalization step
   gam = t(gam)
-  gamI = SqrtWeightedMeanInverse(t(gam))
-  betamean = group_action_by_gamma_coord(betamean, gamI)
+  gamI = SqrtWeightedMeanInverse(t(gam)) ##
+  betamean = group_action_by_gamma_coord(betamean, gamI) ##
   mu = fdasrvf::curve_to_q(betamean, scale = FALSE)$q
 
 
