@@ -104,21 +104,9 @@ multivariate_weighted_karcher_mean <- function (
   qn = array(0, dim = c(L, M, N))
   normbar = rep(0, maxit + 1)
 
-  # cat("\nInitializing...\n")
-  # gam = matrix(0, nrow = M, ncol = N)
-  # for (k in 1:N) {
-  #   out = find_rotation_seed_unique(qmu, q[, , k], lambda, rotation=FALSE, scale=FALSE) ##
-  #   gam[, k] = out$gambest
-  # }
-  #
-  # gamI = sqrt_weighted_mean_inverse(gam)
-  # bmu = group_action_by_gamma_coord(bmu, gamI) ##
-  # qmu = fdasrvf::curve_to_q(bmu, FALSE)$q
-  # qmu[is.nan(qmu)] = 0
-
   while (itr < maxit) {
-    # cat(sprintf("Iteration: %d\n", itr))
 
+    # align the curves
     alignment_step <- foreach::foreach(
       n = 1:N,
       .combine = cbind,
@@ -174,8 +162,6 @@ multivariate_weighted_karcher_mean <- function (
   gam = t(gam)
   gamI = sqrt_weighted_mean_inverse(t(gam))
   betamean = group_action_by_gamma_coord(betamean, gamI) ##
-
-  betamean <- betamean - fdasrvf:::calculatecentroid(betamean) ################# da controllare
   qmu = fdasrvf::curve_to_q(betamean, scale = FALSE)$q
 
 
@@ -186,7 +172,7 @@ multivariate_weighted_karcher_mean <- function (
     qmu = qmu,
     beta = beta,
     q = q,
-    betan = betan,
+    betan = betan, ## NULL al momento
     qn = qn,
     wts = wts,
     type = type,

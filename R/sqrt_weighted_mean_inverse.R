@@ -4,23 +4,25 @@
 #' shooting vectors and finds the inverse of (weighted) mean.
 #'
 #' It is based on the `SqrtMeanInverse` funcion of the `fdasrvf` package, and
-#' enlarges it potentiality by computing the mean both non-weighted and weighted
+#' enlarges it potentiality by computing the mean both non-weighted and weighted.
 #'
-#' @param gam matrix (\eqn{N} x \eqn{M}) of \eqn{M} warping functions with
-#' \eqn{N} samples
+#' @param gam matrix (\eqn{M} x \eqn{N}) of \eqn{N} warping functions with
+#' \eqn{M} sampling points
 #' @param wts vector of weights
+#'
 #' @return `gamI` inverse of (weighted) Karcher mean warping function
 #'
 #' @keywords srvf alignment
+#'
 #' @references Srivastava, A., Wu, W., Kurtek, S., Klassen, E., Marron, J. S.,
 #'  May 2011. Registration of functional data using fisher-rao metric,
 #'  arXiv:1103.3817v2.
+#'
 #' @references Tucker, J. D., Wu, W., Srivastava, A.,
 #'  Generative Models for Function Data using Phase and Amplitude Separation,
 #'  Computational Statistics and Data Analysis (2012), 10.1016/j.csda.2012.12.001.
+#'
 #' @export
-#' @examples
-#' gamI <- sqrt_weighted_mean_inverse(fdasrvf::simu_warp$warping_functions)
 sqrt_weighted_mean_inverse <- function(
     gam,
     wts = NULL

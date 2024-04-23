@@ -216,7 +216,7 @@ SDG = function (
 
     #SDG as the mean
     if (!add_noise)
-      fun_s_array[ , ,i] = res$betamean - res$betamean[,1] + f0_temp
+      fun_s_array[ , , i] = res$betamean + f0_temp
 
     #SDG as the mean + noise
     else {
