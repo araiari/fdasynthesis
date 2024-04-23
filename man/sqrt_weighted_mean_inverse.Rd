@@ -7,8 +7,8 @@
 sqrt_weighted_mean_inverse(gam, wts = NULL)
 }
 \arguments{
-\item{gam}{matrix (\eqn{N} x \eqn{M}) of \eqn{M} warping functions with
-\eqn{N} samples}
+\item{gam}{matrix (\eqn{M} x \eqn{N}) of \eqn{N} warping functions with
+\eqn{M} sampling points}
 
 \item{wts}{vector of weights}
 }
@@ -21,10 +21,7 @@ shooting vectors and finds the inverse of (weighted) mean.
 }
 \details{
 It is based on the \code{SqrtMeanInverse} funcion of the \code{fdasrvf} package, and
-enlarges it potentiality by computing the mean both non-weighted and weighted
-}
-\examples{
-gamI <- sqrt_weighted_mean_inverse(fdasrvf::simu_warp$warping_functions)
+enlarges it potentiality by computing the mean both non-weighted and weighted.
 }
 \references{
 Srivastava, A., Wu, W., Kurtek, S., Klassen, E., Marron, J. S.,

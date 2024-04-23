@@ -9,7 +9,8 @@ multivariate_weighted_karcher_mean(
   wts = NULL,
   lambda = 0,
   maxit = 20,
-  ncores = 1L
+  ncores = 1L,
+  use_verbose = TRUE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ curve. Use \code{NULL} for unweighted mean. Defaults to \code{NULL}.}
 \item{maxit}{Maximum number of iterations.}
 
 \item{ncores}{XXX}
+
+\item{use_verbose}{XXX}
 }
 \value{
 Returns a list containing \item{qmu}{mean srvf}
@@ -42,11 +45,6 @@ Returns a list containing \item{qmu}{mean srvf}
 \description{
 Calculates (weighted) Karcher mean of a collection of multivariate functional
 data using the elastic square-root velocity (srvf) framework.
-}
-\references{
-Srivastava, A., Klassen, E., Joshi, S., Jermyn, I., (2011). Shape
-analysis of elastic curves in euclidean spaces. Pattern Analysis and Machine
-Intelligence, IEEE Transactions on 33 (7), 1415-1428.
 }
 \keyword{alignment}
 \keyword{srvf}
