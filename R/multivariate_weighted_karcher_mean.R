@@ -11,6 +11,8 @@
 #' @param lambda A numeric value specifying the elasticity. Defaults to `0.0`.
 #' @param maxit Maximum number of iterations.
 #' @param ncores XXX
+#' @param use_verbose XXX
+#'
 #' @return Returns a list containing \item{qmu}{mean srvf}
 #' \item{betamean}{(Weighted) mean curve}
 #' \item{qmu}{(Weighted) mean srvf}
@@ -22,17 +24,17 @@
 #' \item{E}{Energy, as the \eqn{L^2}-norm of the mean at each iteration}
 #' \item{qun}{Cost function, as the sum of distances to the mean at each iteration}
 #' \item{type}{String indicating whether mean or weighted mean is returned}
+#'
 #' @keywords srvf alignment
-#' @references Srivastava, A., Klassen, E., Joshi, S., Jermyn, I., (2011). Shape
-#'    analysis of elastic curves in euclidean spaces. Pattern Analysis and Machine
-#'    Intelligence, IEEE Transactions on 33 (7), 1415-1428.
+#'
 #' @importFrom foreach %dopar%
 multivariate_weighted_karcher_mean <- function (
     beta,
     wts = NULL,
     lambda = 0.0,
     maxit = 20,
-    ncores = 1L
+    ncores = 1L,
+    use_verbose = TRUE
 ) {
 
   tmp = dim(beta)
@@ -55,10 +57,11 @@ multivariate_weighted_karcher_mean <- function (
   navail <- max(parallel::detectCores() - 1, 1)
 
   if (ncores > navail) {
-    cli::cli_alert_warning(
-      "The number of requested cores ({ncores}) is larger than the number of
-      available cores ({navail}). Using the maximum number of available cores..."
-    )
+    if (use_verbose)
+      cli::cli_alert_warning(
+        "The number of requested cores ({ncores}) is larger than the number of
+        available cores ({navail}). Using the maximum number of available cores..."
+      )
     ncores <- navail
   }
 
@@ -79,7 +82,7 @@ multivariate_weighted_karcher_mean <- function (
     ) %dopar% {
     find_rotation_seed_unique(
       qmu, q[ , , n],
-      mode = mode,
+      mode = "O",
       alignment = TRUE,
       rotation = FALSE,
       scale = FALSE
@@ -123,7 +126,7 @@ multivariate_weighted_karcher_mean <- function (
         out <- find_rotation_seed_unique(
           q1 = qmu,
           q2 = q[, , n],
-          mode = mode,
+          mode = "O",
           alignment = TRUE,
           rotation = FALSE,
           scale = FALSE,
@@ -171,6 +174,8 @@ multivariate_weighted_karcher_mean <- function (
   gam = t(gam)
   gamI = sqrt_weighted_mean_inverse(t(gam))
   betamean = group_action_by_gamma_coord(betamean, gamI) ##
+
+  betamean <- betamean - fdasrvf:::calculatecentroid(betamean) ################# da controllare
   qmu = fdasrvf::curve_to_q(betamean, scale = FALSE)$q
 
 

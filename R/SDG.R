@@ -59,6 +59,7 @@
 #' subset of functions with the same label. Defaults to `NULL`.
 #' @param use_verbose boolean : specifying whether to display information about
 #'   the calculations in the console. Defaults to `FALSE`.
+#' @param ncores integer, number of cores to be used for parallel computation.
 #'
 #' @return A list of the following elements:
 #' - `fun_s_array` array of sizes \eqn{L \times M \times N_{synth}} : contains the values
@@ -201,27 +202,22 @@ SDG = function (
     #starting point
     f0_temp = apply(fun_array[, 1, i_other[out_weight$index_k]], 1, stats::weighted.mean, out_weight$p_k)
 
-    #karcher #################################################### Da rifare
+    #karcher #################################################### Da controllare
     res = multivariate_weighted_karcher_mean(
       beta = fun_array[ , , i_other[out_weight$index_k]],
       wts = out_weight$p_k,
-      ncores = ncores
+      lambda = 0.0,
+      maxit = 20,
+      ncores = ncores,
+      use_verbose = use_verbose
     )
-    # res = weighted_mean(
-    #   beta = fun_array[ , , i_other[out_weight$index_k]],
-    #   wts = out_weight$p_k,
-    #   mode = "O",
-    #   rotation = FALSE,
-    #   scale = FALSE,
-    #   ms = "mean",
-    #   ncores = 6
-    # )
 
     # cli::cli_alert_info("Mean computed")
 
     #SDG as the mean
     if (!add_noise)
-      fun_s_array[ , ,i] = res$betamean + f0_temp
+      fun_s_array[ , ,i] = res$betamean - res$betamean[,1] + f0_temp
+
     #SDG as the mean + noise
     else {
       q_s_temp = add_noise(

@@ -17,7 +17,8 @@ SDG(
   is_constrained = NULL,
   cv = 0,
   clust_labels = NULL,
-  use_verbose = FALSE
+  use_verbose = FALSE,
+  ncores = 1L
 )
 }
 \arguments{
@@ -73,6 +74,8 @@ subset of functions with the same label. Defaults to \code{NULL}.}
 
 \item{use_verbose}{boolean : specifying whether to display information about
 the calculations in the console. Defaults to \code{FALSE}.}
+
+\item{ncores}{integer, number of cores to be used for parallel computation.}
 }
 \value{
 A list of the following elements:
