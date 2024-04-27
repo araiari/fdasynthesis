@@ -103,9 +103,9 @@ compute_elastic_distance_one_set <- function(f_array, time) {
 #' For each matrix, the element in position `[i,j]` represents the distance
 #' between the `i`-th function in `f_array1` and the `j`-th function in
 #' `f_array_2`.
-compute_elastic_distance_two_sets = function(f_array1, f_array2, time) {
-  L <-  dim(f_array1)[1]
-  M <- dim(f_array1)[2]
+compute_elastic_distance_two_sets <- function(f_array1, f_array2, time) {
+  L  <- dim(f_array1)[1]
+  M  <- dim(f_array1)[2]
   N1 <- dim(f_array1)[3]
   N2 <- dim(f_array2)[3]
 
@@ -114,18 +114,14 @@ compute_elastic_distance_two_sets = function(f_array1, f_array2, time) {
   if (dim(f_array2)[2] != M)
     cli::cli_abort("The functions in the two sets have different grid sizes.")
 
-  Dx_tot <- Dy_tot <- matrix(nrow = N1, ncol = N2)
-
-  # Multidimensional case:
-  if (L > 1) {
-    .pairwise_distances <- function(f1, f2, time) {
-      N1 <- dim(f1)[3]
-      N2 <- dim(f2)[3]
-
-      pb <- progressr::progressor(steps = N1)
-      furrr::future_walk(1:N1, \(n1) {
-        pb()
-        out <- purrr::map(1:N2, \(n2) {
+  .pairwise_distances <- function(f1, f2, time) {
+    N1 <- dim(f1)[3]
+    N2 <- dim(f2)[3]
+    pb <- progressr::progressor(steps = N1)
+    outer_res <- furrr::future_map(1:N1, \(n1) {
+      pb()
+      if (L > 1) { # Multidimensional case
+        inner_res <- purrr::map(1:N2, \(n2) {
           fdasrvf::calc_shape_dist(
             beta1 = f1[, , n1],
             beta2 = f2[, , n2],
@@ -134,36 +130,29 @@ compute_elastic_distance_two_sets = function(f_array1, f_array2, time) {
             scale = FALSE
           )
         })
-
-        Dx_tot[n1, ] <- purrr::map_dbl(out, "dx")
-        Dy_tot[n1, ] <- purrr::map_dbl(out, "d")
-      }, .options = furrr::furrr_options(seed = TRUE))
-    }
-
-  }
-
-  # Unidimensional case:
-  else {
-    .pairwise_distances <- function(f1, f2, time) {
-      N1 <- dim(f1)[3]
-      N2 <- dim(f2)[3]
-      pb <- progressr::progressor(steps = N1)
-      furrr::future_walk(1:N1, \(n1) {
-        pb()
-        out <- purrr::map(1:N2, \(n2) {
+        Dx_tot <- purrr::map_dbl(inner_res, "dx")
+        Dy_tot <- purrr::map_dbl(inner_res, "d")
+      } else { # Unidimensional case
+        inner_res <- purrr::map(1:N2, \(n2) {
           fdasrvf::elastic.distance(
             f1 = f1[1, , n1],
             f2 = f2[1, , n2],
             time = time
           )
         })
-        Dx_tot[n1, ] <- purrr::map_dbl(out, "Dx")
-        Dy_tot[n1, ] <- purrr::map_dbl(out, "Dy")
-      }, .options = furrr::furrr_options(seed = TRUE))
-    }
+        Dx_tot <- purrr::map_dbl(inner_res, "Dx")
+        Dy_tot <- purrr::map_dbl(inner_res, "Dy")
+      }
+
+
+      list(Dx_tot = Dx_tot, Dy_tot = Dy_tot)
+    }, .options = furrr::furrr_options(seed = TRUE))
   }
 
-  Dlist = .pairwise_distances(f1 = f_array1, f2 = f_array2, time = time)
+  out <- .pairwise_distances(f1 = f_array1, f2 = f_array2, time = time)
+
+  Dx_tot <- do.call(rbind, purrr::map(out, "Dx_tot"))
+  Dy_tot <- do.call(rbind, purrr::map(out, "Dy_tot"))
 
   list(Dx_tot = Dx_tot, Dy_tot = Dy_tot)
 
